@@ -33,8 +33,8 @@ func ExampleNew() {
 	logger.Info(ctx, "logged because logger level was changed to DEBUG")
 
 	// Output:
-	// <stripped>	ERROR	zapctxd/example_test.go:23	something failed	{"baz": 1, "quux": 2.2, "foo": "bar"}
-	// <stripped>	INFO	zapctxd/example_test.go:28	logged because is important	{"foo": "bar"}
-	// <stripped>	INFO	zapctxd/example_test.go:29	logged because of forced DEBUG mode	{"foo": "bar"}
-	// <stripped>	INFO	zapctxd/example_test.go:32	logged because logger level was changed to DEBUG	{"foo": "bar"}
+	// <stripped>	ERROR	zapctxd/example_test.go:24	something failed	{"baz": 1, "quux": 2.2, "foo": "bar"}
+	// <stripped>	INFO	zapctxd/example_test.go:29	logged because is important	{"foo": "bar"}
+	// <stripped>	INFO	zapctxd/example_test.go:30	logged because of forced DEBUG mode	{"foo": "bar"}
+	// <stripped>	INFO	zapctxd/example_test.go:33	logged because logger level was changed to DEBUG	{"foo": "bar"}
 }
