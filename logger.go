@@ -258,3 +258,8 @@ func (l Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogger
 func (l Logger) CtxdLogger() ctxd.Logger {
 	return l
 }
+
+// ZapLogger returns *zap.Logger that used in Logger.
+func (l Logger) ZapLogger() *zap.Logger {
+	return l.sugared.Desugar()
+}

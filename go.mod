@@ -3,8 +3,8 @@ module github.com/bool64/zapctxd
 go 1.13
 
 require (
-	github.com/bool64/ctxd v0.1.1
-	github.com/bool64/dev v0.1.10
+	github.com/bool64/ctxd v0.1.3
+	github.com/bool64/dev v0.1.15
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.2 // indirect

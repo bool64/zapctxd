@@ -3,6 +3,7 @@ package zapctxd_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"sync"
 	"testing"
 
@@ -118,7 +119,7 @@ func TestLogger_Importantw_dev(t *testing.T) {
 	c.Info(ctx, "hello!", "foo", 1)
 	c.Important(ctx, "account created", "foo", 1)
 
-	assert.Equal(t, "<stripped>\tINFO\tzapctxd/logger_test.go:119\taccount created\t{\"foo\": 1}\n", w.String())
+	assert.Equal(t, "<stripped>\tINFO\tzapctxd/logger_test.go:120\taccount created\t{\"foo\": 1}\n", w.String())
 }
 
 func TestNew_atomic_dev(t *testing.T) {
@@ -143,20 +144,20 @@ func TestNew_atomic_dev(t *testing.T) {
 		c.Important(ctx, "msg", "lvl", lvl, "important", true)
 	}
 
-	assert.Equal(t, `<stripped>	ERROR	zapctxd/logger_test.go:142	msg	{"lvl": "error"}
-<stripped>	INFO	zapctxd/logger_test.go:143	msg	{"lvl": "error", "important": true}
-<stripped>	WARN	zapctxd/logger_test.go:141	msg	{"lvl": "warn"}
-<stripped>	ERROR	zapctxd/logger_test.go:142	msg	{"lvl": "warn"}
-<stripped>	INFO	zapctxd/logger_test.go:143	msg	{"lvl": "warn", "important": true}
-<stripped>	INFO	zapctxd/logger_test.go:140	msg	{"lvl": "info"}
-<stripped>	WARN	zapctxd/logger_test.go:141	msg	{"lvl": "info"}
-<stripped>	ERROR	zapctxd/logger_test.go:142	msg	{"lvl": "info"}
-<stripped>	INFO	zapctxd/logger_test.go:143	msg	{"lvl": "info", "important": true}
-<stripped>	DEBUG	zapctxd/logger_test.go:139	msg	{"lvl": "debug"}
-<stripped>	INFO	zapctxd/logger_test.go:140	msg	{"lvl": "debug"}
-<stripped>	WARN	zapctxd/logger_test.go:141	msg	{"lvl": "debug"}
-<stripped>	ERROR	zapctxd/logger_test.go:142	msg	{"lvl": "debug"}
-<stripped>	INFO	zapctxd/logger_test.go:143	msg	{"lvl": "debug", "important": true}
+	assert.Equal(t, `<stripped>	ERROR	zapctxd/logger_test.go:143	msg	{"lvl": "error"}
+<stripped>	INFO	zapctxd/logger_test.go:144	msg	{"lvl": "error", "important": true}
+<stripped>	WARN	zapctxd/logger_test.go:142	msg	{"lvl": "warn"}
+<stripped>	ERROR	zapctxd/logger_test.go:143	msg	{"lvl": "warn"}
+<stripped>	INFO	zapctxd/logger_test.go:144	msg	{"lvl": "warn", "important": true}
+<stripped>	INFO	zapctxd/logger_test.go:141	msg	{"lvl": "info"}
+<stripped>	WARN	zapctxd/logger_test.go:142	msg	{"lvl": "info"}
+<stripped>	ERROR	zapctxd/logger_test.go:143	msg	{"lvl": "info"}
+<stripped>	INFO	zapctxd/logger_test.go:144	msg	{"lvl": "info", "important": true}
+<stripped>	DEBUG	zapctxd/logger_test.go:140	msg	{"lvl": "debug"}
+<stripped>	INFO	zapctxd/logger_test.go:141	msg	{"lvl": "debug"}
+<stripped>	WARN	zapctxd/logger_test.go:142	msg	{"lvl": "debug"}
+<stripped>	ERROR	zapctxd/logger_test.go:143	msg	{"lvl": "debug"}
+<stripped>	INFO	zapctxd/logger_test.go:144	msg	{"lvl": "debug", "important": true}
 `, w.String(), w.String())
 }
 
@@ -196,4 +197,17 @@ func TestNew_atomic(t *testing.T) {
 {"level":"error","time":"<stripped>","msg":"msg","lvl":"debug"}
 {"level":"info","time":"<stripped>","msg":"msg","lvl":"debug","important":true}
 `, w.String(), w.String())
+}
+
+func TestLogger_ZapLogger(t *testing.T) {
+	w := bytes.NewBuffer(nil)
+
+	c := zapctxd.New(zapctxd.Config{
+		Level:     zap.ErrorLevel, // Error level does not allow Info messages, but allows Important.
+		StripTime: true,
+		Output:    w,
+	})
+
+	c.ZapLogger().Error("oops", zap.Error(errors.New("failed")))
+	assert.Equal(t, `{"level":"error","time":"<stripped>","msg":"oops","error":"failed"}`+"\n", w.String())
 }
