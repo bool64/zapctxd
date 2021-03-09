@@ -27,8 +27,8 @@ type Logger struct {
 
 // Config is log configuration.
 type Config struct {
-	Level   zapcore.Level `envconfig:"LOG_LEVEL" default:"error"`
-	DevMode bool          `envconfig:"LOG_DEV_MODE"`
+	Level   zapcore.Level `split_words:"true" default:"error"`
+	DevMode bool          `split_words:"true"`
 	Output  io.Writer
 
 	// StripTime disables time variance in logger.
