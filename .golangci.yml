@@ -30,6 +30,7 @@ linters:
     - exhaustivestruct
     - interfacer
     - forcetypeassert
+    - ifshort
 
 issues:
   exclude-use-default: false
