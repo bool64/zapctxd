@@ -17,7 +17,7 @@ var _ ctxd.Logger = Logger{}
 // Logger is a contextualized zap logger.
 type Logger struct {
 	AtomicLevel zap.AtomicLevel
-	callerSkip  int
+	callerSkip  bool
 	encoder     zapcore.Encoder
 	sugared     *zap.SugaredLogger
 	debug       *zap.SugaredLogger
@@ -67,8 +67,8 @@ func New(cfg Config) Logger {
 		encoderConfig = zap.NewDevelopmentEncoderConfig()
 		encoderConfig.EncodeTime = timeEncoder
 		l.encoder = zapcore.NewConsoleEncoder(encoderConfig)
-		l.callerSkip = 1
-		l.options = append(l.options, zap.Development(), zap.AddCaller(), zap.AddCallerSkip(l.callerSkip))
+		l.callerSkip = true
+		l.options = append(l.options, zap.Development(), zap.AddCaller(), zap.AddCallerSkip(1))
 	} else {
 		encoderConfig.MessageKey = "msg"
 		encoderConfig.TimeKey = "time"
@@ -97,11 +97,11 @@ func (l *Logger) make() {
 
 // SkipCaller adapts logger for wrapping by increasing skip caller counter.
 func (l Logger) SkipCaller() Logger {
-	if l.callerSkip == 0 {
+	if !l.callerSkip {
 		return l
 	}
 
-	l.callerSkip++
+	l.options = append(l.options, zap.AddCallerSkip(1))
 	l.make()
 
 	return l

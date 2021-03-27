@@ -211,3 +211,25 @@ func TestLogger_ZapLogger(t *testing.T) {
 	c.ZapLogger().Error("oops", zap.Error(errors.New("failed")))
 	assert.Equal(t, `{"level":"error","time":"<stripped>","msg":"oops","error":"failed"}`+"\n", w.String())
 }
+
+func TestLogger_SkipCaller(t *testing.T) {
+	w := bytes.NewBuffer(nil)
+
+	c := zapctxd.New(zapctxd.Config{
+		Level:     zap.InfoLevel,
+		StripTime: true,
+		DevMode:   true,
+		Output:    w,
+	})
+
+	do := func() {
+		c.Info(context.Background(), "hello", "k", "v")
+		c.SkipCaller().Info(context.Background(), "world", "k", "v")
+	}
+
+	do()
+
+	assert.Equal(t, `<stripped>	INFO	zapctxd/logger_test.go:226	hello	{"k": "v"}
+<stripped>	INFO	zapctxd/logger_test.go:230	world	{"k": "v"}
+`, w.String())
+}
