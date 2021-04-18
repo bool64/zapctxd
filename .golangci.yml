@@ -31,6 +31,7 @@ linters:
     - interfacer
     - forcetypeassert
     - scopelint
+    - ifshort
 
 issues:
   exclude-use-default: false
