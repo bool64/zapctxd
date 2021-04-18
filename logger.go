@@ -27,9 +27,10 @@ type Logger struct {
 
 // Config is log configuration.
 type Config struct {
-	Level   zapcore.Level `split_words:"true" default:"error"`
-	DevMode bool          `split_words:"true"`
-	Output  io.Writer
+	Level      zapcore.Level   `split_words:"true" default:"error"`
+	DevMode    bool            `split_words:"true"`
+	FieldNames ctxd.FieldNames `split_words:"true"`
+	Output     io.Writer
 
 	// StripTime disables time variance in logger.
 	StripTime bool
@@ -72,6 +73,15 @@ func New(cfg Config) Logger {
 	} else {
 		encoderConfig.MessageKey = "msg"
 		encoderConfig.TimeKey = "time"
+
+		if cfg.FieldNames.Message != "" {
+			encoderConfig.MessageKey = cfg.FieldNames.Message
+		}
+
+		if cfg.FieldNames.Timestamp != "" {
+			encoderConfig.TimeKey = cfg.FieldNames.Timestamp
+		}
+
 		encoderConfig.EncodeTime = timeEncoder
 		l.encoder = zapcore.NewJSONEncoder(encoderConfig)
 	}
