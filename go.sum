@@ -5,6 +5,8 @@ github.com/bool64/ctxd v0.1.4/go.mod h1:vbCBsEfD4TGXGTPEEQwjB4M5Ny2MC8r+9N2JSP3y
 github.com/bool64/dev v0.1.25/go.mod h1:cTHiTDNc8EewrQPy3p1obNilpMpdmlUesDkFTF2zRWU=
 github.com/bool64/dev v0.1.26 h1:9RppeANjTKsF0ZEROkgh0z8qKTvpNeVmKnz0uuCAkS4=
 github.com/bool64/dev v0.1.26/go.mod h1:cTHiTDNc8EewrQPy3p1obNilpMpdmlUesDkFTF2zRWU=
+github.com/bool64/dev v0.1.30 h1:eVn3uMVUj8PoVydfs3D2TaVtbiJVwv3WpEgPnpC3vEk=
+github.com/bool64/dev v0.1.30/go.mod h1:cTHiTDNc8EewrQPy3p1obNilpMpdmlUesDkFTF2zRWU=
 github.com/bool64/shared v0.1.3 h1:gj7XZPYa1flQsCg3q9AIju+W2A1jaexK0fdFu2XtaG0=
 github.com/bool64/shared v0.1.3/go.mod h1:RF1p1Oi29ofgOvinBpetbF5mceOUP3kpMkvLbWOmtm0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
