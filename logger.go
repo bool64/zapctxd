@@ -31,13 +31,14 @@ type Config struct {
 	DevMode    bool            `split_words:"true"`
 	FieldNames ctxd.FieldNames `split_words:"true"`
 	Output     io.Writer
+	ZapOptions []zap.Option
 
 	// StripTime disables time variance in logger.
 	StripTime bool
 }
 
 // New creates contextualized logger with zap backend.
-func New(cfg Config) Logger {
+func New(cfg Config, options ...zap.Option) Logger {
 	level := zap.InfoLevel
 
 	if cfg.Level != 0 {
@@ -62,6 +63,7 @@ func New(cfg Config) Logger {
 	l := Logger{
 		AtomicLevel: zap.NewAtomicLevelAt(level),
 		out:         out,
+		options:     append(cfg.ZapOptions, options...),
 	}
 
 	if cfg.DevMode {

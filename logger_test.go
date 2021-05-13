@@ -233,3 +233,18 @@ func TestLogger_SkipCaller(t *testing.T) {
 <stripped>	INFO	zapctxd/logger_test.go:230	world	{"k": "v"}
 `, w.String())
 }
+
+func TestNew_zapOptions(t *testing.T) {
+	w := bytes.NewBuffer(nil)
+
+	c := zapctxd.New(zapctxd.Config{
+		Level:      zap.InfoLevel,
+		StripTime:  true,
+		Output:     w,
+		ZapOptions: []zap.Option{zap.Fields(zap.String("config", "foo"))},
+	}, zap.Fields(zap.String("constructor", "bar")))
+
+	c.Info(context.Background(), "hello", "k", "v")
+	assert.Equal(t, `{"level":"info","time":"<stripped>","msg":"hello","config":"foo","constructor":"bar","k":"v"}
+`, w.String())
+}

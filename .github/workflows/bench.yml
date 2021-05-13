@@ -1,3 +1,4 @@
+# This script is provided by github.com/bool64/dev.
 name: bench
 on:
   pull_request:
@@ -62,14 +63,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ (github.event.pull_request.base.sha != '' ) && github.event.pull_request.base.sha || github.event.inputs.old }}
-          path: __base
+          path: zapctxd
       - name: Run base benchmark
         if: env.RUN_BASE_BENCHMARK == 'on' && steps.benchmark-base.outputs.cache-hit != 'true' && (github.event.pull_request.base.sha != '' || github.event.inputs.old != '')
         run: |
           export REF_NAME=master
-          cd __base
-          BENCH_COUNT=5 make bench-run bench-stat
-          cp bench-master.txt ../bench-master.txt
+          cd zapctxd
+          make | grep bench-run && (BENCH_COUNT=5 make bench-run bench-stat && cp bench-master.txt ../bench-master.txt) || echo "No benchmarks in base"
       - name: Benchmark
         id: bench
         run: |
