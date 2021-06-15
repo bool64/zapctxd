@@ -145,9 +145,11 @@ func (l *Logger) log(ctx context.Context, f func(msg string, keysAndValues ...in
 
 				for k := 0; k < len(tuples)-1; k += 2 {
 					exists := false
+
 					for j := 0; j < len(kv)-1; j += 2 {
 						if kv[j] == tuples[k] {
 							exists = true
+
 							break
 						}
 					}
@@ -156,8 +158,6 @@ func (l *Logger) log(ctx context.Context, f func(msg string, keysAndValues ...in
 						kv = append(kv, tuples[k], tuples[k+1])
 					}
 				}
-
-				// kv = append(kv, tuples...)
 			}
 		}
 	}
