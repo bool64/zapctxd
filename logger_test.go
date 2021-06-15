@@ -248,3 +248,22 @@ func TestNew_zapOptions(t *testing.T) {
 	assert.Equal(t, `{"level":"info","time":"<stripped>","msg":"hello","config":"foo","constructor":"bar","k":"v"}
 `, w.String())
 }
+
+func TestNew_structuredError(t *testing.T) {
+	w := bytes.Buffer{}
+
+	c := zapctxd.New(zapctxd.Config{
+		Level:  zap.ErrorLevel, // Error level does not allow Info messages, but allows Important.
+		Output: &w,
+	})
+
+	ctx := context.Background()
+	ctx = ctxd.AddFields(ctx, "ctx", 123)
+
+	err := ctxd.WrapError(ctx, errors.New("failed"), "making foo", "detail1", 1, "detail2", 2)
+
+	c.Error(ctx, "hello!", "foo", 1, "error", err)
+
+	assertjson.Equal(t,
+		[]byte(`{"level":"error","time":"<ignore-diff>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}`), w.Bytes(), w.String())
+}

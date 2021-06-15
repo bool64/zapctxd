@@ -3,6 +3,7 @@ package zapctxd
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var _ ctxd.Logger = Logger{}
+var _ ctxd.Logger = &Logger{}
 
 // Logger is a contextualized zap logger.
 type Logger struct {
@@ -71,7 +72,7 @@ func New(cfg Config, options ...zap.Option) Logger {
 		encoderConfig.EncodeTime = timeEncoder
 		l.encoder = zapcore.NewConsoleEncoder(encoderConfig)
 		l.callerSkip = true
-		l.options = append(l.options, zap.Development(), zap.AddCaller(), zap.AddCallerSkip(1))
+		l.options = append(l.options, zap.Development(), zap.AddCaller(), zap.AddCallerSkip(2))
 	} else {
 		encoderConfig.MessageKey = "msg"
 		encoderConfig.TimeKey = "time"
@@ -108,7 +109,7 @@ func (l *Logger) make() {
 }
 
 // SkipCaller adapts logger for wrapping by increasing skip caller counter.
-func (l Logger) SkipCaller() Logger {
+func (l *Logger) SkipCaller() *Logger {
 	if !l.callerSkip {
 		return l
 	}
@@ -119,117 +120,102 @@ func (l Logger) SkipCaller() Logger {
 	return l
 }
 
+func (l *Logger) log(ctx context.Context, f func(msg string, keysAndValues ...interface{}), msg string, keysAndValues ...interface{}) {
+	var (
+		fv = ctxd.Fields(ctx)
+		kv = keysAndValues
+	)
+
+	if len(fv) > 0 {
+		kv = make([]interface{}, 0, len(fv)+len(kv))
+
+		kv = append(kv, keysAndValues...)
+		kv = append(kv, fv...)
+	}
+
+	for i := 1; i < len(kv); i += 2 {
+		v := kv[i]
+		if err, ok := v.(error); ok {
+			var se ctxd.StructuredError
+
+			if errors.As(err, &se) {
+				kv[i] = err.Error()
+
+				tuples := se.Tuples()
+
+				for k := 0; k < len(tuples)-1; k += 2 {
+					exists := false
+					for j := 0; j < len(kv)-1; j += 2 {
+						if kv[j] == tuples[k] {
+							exists = true
+							break
+						}
+					}
+
+					if !exists {
+						kv = append(kv, tuples[k], tuples[k+1])
+					}
+				}
+
+				// kv = append(kv, tuples...)
+			}
+		}
+	}
+
+	f(msg, kv...)
+}
+
 // Debug implements ctxd.Logger.
-func (l Logger) Debug(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interface{}) {
 	z := l.get(ctx, zap.DebugLevel)
 	if z == nil {
 		return
 	}
 
-	var (
-		fv = ctxd.Fields(ctx)
-		kv = keysAndValues
-	)
-
-	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
-
-		kv = append(kv, keysAndValues...)
-		kv = append(kv, fv...)
-	}
-
-	z.Debugw(msg, kv...)
+	l.log(ctx, z.Debugw, msg, keysAndValues...)
 }
 
 // Info implements ctxd.Logger.
-func (l Logger) Info(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interface{}) {
 	z := l.get(ctx, zap.InfoLevel)
 	if z == nil {
 		return
 	}
 
-	var (
-		fv = ctxd.Fields(ctx)
-		kv = keysAndValues
-	)
-
-	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
-
-		kv = append(kv, keysAndValues...)
-		kv = append(kv, fv...)
-	}
-
-	z.Infow(msg, kv...)
+	l.log(ctx, z.Infow, msg, keysAndValues...)
 }
 
 // Important implements ctxd.Logger.
-func (l Logger) Important(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Important(ctx context.Context, msg string, keysAndValues ...interface{}) {
 	z := l.get(ctxd.WithDebug(ctx), zap.InfoLevel)
 	if z == nil {
 		return
 	}
 
-	var (
-		fv = ctxd.Fields(ctx)
-		kv = keysAndValues
-	)
-
-	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
-
-		kv = append(kv, keysAndValues...)
-		kv = append(kv, fv...)
-	}
-
-	z.Infow(msg, kv...)
+	l.log(ctx, z.Infow, msg, keysAndValues...)
 }
 
 // Warn implements ctxd.Logger.
-func (l Logger) Warn(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interface{}) {
 	z := l.get(ctx, zap.WarnLevel)
 	if z == nil {
 		return
 	}
 
-	var (
-		fv = ctxd.Fields(ctx)
-		kv = keysAndValues
-	)
-
-	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
-
-		kv = append(kv, keysAndValues...)
-		kv = append(kv, fv...)
-	}
-
-	z.Warnw(msg, kv...)
+	l.log(ctx, z.Warnw, msg, keysAndValues...)
 }
 
 // Error implements ctxd.Logger.
-func (l Logger) Error(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interface{}) {
 	z := l.get(ctx, zap.ErrorLevel)
 	if z == nil {
 		return
 	}
 
-	var (
-		fv = ctxd.Fields(ctx)
-		kv = keysAndValues
-	)
-
-	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
-
-		kv = append(kv, keysAndValues...)
-		kv = append(kv, fv...)
-	}
-
-	z.Errorw(msg, kv...)
+	l.log(ctx, z.Errorw, msg, keysAndValues...)
 }
 
-func (l Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogger {
+func (l *Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogger {
 	z := l.sugared
 	if !l.AtomicLevel.Enabled(level) {
 		z = nil
@@ -267,11 +253,11 @@ func (l Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogger
 }
 
 // CtxdLogger provides contextualized logger.
-func (l Logger) CtxdLogger() ctxd.Logger {
+func (l *Logger) CtxdLogger() ctxd.Logger {
 	return l
 }
 
 // ZapLogger returns *zap.Logger that used in Logger.
-func (l Logger) ZapLogger() *zap.Logger {
+func (l *Logger) ZapLogger() *zap.Logger {
 	return l.sugared.Desugar()
 }
