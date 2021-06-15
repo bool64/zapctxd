@@ -248,3 +248,31 @@ func TestNew_zapOptions(t *testing.T) {
 	assert.Equal(t, `{"level":"info","time":"<stripped>","msg":"hello","config":"foo","constructor":"bar","k":"v"}
 `, w.String())
 }
+
+func TestNew_structuredError(t *testing.T) {
+	w := bytes.Buffer{}
+
+	c := zapctxd.New(zapctxd.Config{
+		Level:     zap.DebugLevel,
+		Output:    &w,
+		StripTime: true,
+	})
+
+	ctx := context.Background()
+	ctx = ctxd.AddFields(ctx, "ctx", 123)
+
+	err := ctxd.WrapError(ctx, errors.New("failed"), "making foo", "detail1", 1, "detail2", 2)
+
+	c.Debug(ctx, "hello!", "foo", 1, "error", err)
+	c.Info(ctx, "hello!", "foo", 1, "error", err)
+	c.Warn(ctx, "hello!", "foo", 1, "error", err)
+	c.Error(ctx, "hello!", "foo", 1, "error", err)
+	c.Important(ctx, "hello!", "foo", 1, "error", err)
+
+	assert.Equal(t, `{"level":"debug","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"info","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"warn","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"error","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"info","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+`, w.String(), w.String())
+}
