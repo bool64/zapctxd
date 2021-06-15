@@ -72,7 +72,7 @@ func New(cfg Config, options ...zap.Option) Logger {
 		encoderConfig.EncodeTime = timeEncoder
 		l.encoder = zapcore.NewConsoleEncoder(encoderConfig)
 		l.callerSkip = true
-		l.options = append(l.options, zap.Development(), zap.AddCaller(), zap.AddCallerSkip(2))
+		l.options = append(l.options, zap.Development(), zap.AddCaller(), zap.AddCallerSkip(1))
 	} else {
 		encoderConfig.MessageKey = "msg"
 		encoderConfig.TimeKey = "time"
@@ -120,7 +120,13 @@ func (l *Logger) SkipCaller() *Logger {
 	return l
 }
 
-func (l *Logger) log(ctx context.Context, f func(msg string, keysAndValues ...interface{}), msg string, keysAndValues ...interface{}) {
+// Debug implements ctxd.Logger.
+func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interface{}) {
+	z := l.get(ctx, zap.DebugLevel)
+	if z == nil {
+		return
+	}
+
 	var (
 		fv = ctxd.Fields(ctx)
 		kv = keysAndValues
@@ -139,40 +145,36 @@ func (l *Logger) log(ctx context.Context, f func(msg string, keysAndValues ...in
 			var se ctxd.StructuredError
 
 			if errors.As(err, &se) {
-				kv[i] = err.Error()
-
-				tuples := se.Tuples()
-
-				for k := 0; k < len(tuples)-1; k += 2 {
-					exists := false
-
-					for j := 0; j < len(kv)-1; j += 2 {
-						if kv[j] == tuples[k] {
-							exists = true
-
-							break
-						}
-					}
-
-					if !exists {
-						kv = append(kv, tuples[k], tuples[k+1])
-					}
-				}
+				kv = expandError(kv, se, i)
 			}
 		}
 	}
 
-	f(msg, kv...)
+	z.Debugw(msg, kv...)
 }
 
-// Debug implements ctxd.Logger.
-func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interface{}) {
-	z := l.get(ctx, zap.DebugLevel)
-	if z == nil {
-		return
+func expandError(kv []interface{}, se ctxd.StructuredError, i int) []interface{} {
+	kv[i] = se.Error()
+
+	tuples := se.Tuples()
+
+	for k := 0; k < len(tuples)-1; k += 2 {
+		exists := false
+
+		for j := 0; j < len(kv)-1; j += 2 {
+			if kv[j] == tuples[k] {
+				exists = true
+
+				break
+			}
+		}
+
+		if !exists {
+			kv = append(kv, tuples[k], tuples[k+1])
+		}
 	}
 
-	l.log(ctx, z.Debugw, msg, keysAndValues...)
+	return kv
 }
 
 // Info implements ctxd.Logger.
@@ -182,7 +184,30 @@ func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interfac
 		return
 	}
 
-	l.log(ctx, z.Infow, msg, keysAndValues...)
+	var (
+		fv = ctxd.Fields(ctx)
+		kv = keysAndValues
+	)
+
+	if len(fv) > 0 {
+		kv = make([]interface{}, 0, len(fv)+len(kv))
+
+		kv = append(kv, keysAndValues...)
+		kv = append(kv, fv...)
+	}
+
+	for i := 1; i < len(kv); i += 2 {
+		v := kv[i]
+		if err, ok := v.(error); ok {
+			var se ctxd.StructuredError
+
+			if errors.As(err, &se) {
+				kv = expandError(kv, se, i)
+			}
+		}
+	}
+
+	z.Infow(msg, kv...)
 }
 
 // Important implements ctxd.Logger.
@@ -192,7 +217,30 @@ func (l *Logger) Important(ctx context.Context, msg string, keysAndValues ...int
 		return
 	}
 
-	l.log(ctx, z.Infow, msg, keysAndValues...)
+	var (
+		fv = ctxd.Fields(ctx)
+		kv = keysAndValues
+	)
+
+	if len(fv) > 0 {
+		kv = make([]interface{}, 0, len(fv)+len(kv))
+
+		kv = append(kv, keysAndValues...)
+		kv = append(kv, fv...)
+	}
+
+	for i := 1; i < len(kv); i += 2 {
+		v := kv[i]
+		if err, ok := v.(error); ok {
+			var se ctxd.StructuredError
+
+			if errors.As(err, &se) {
+				kv = expandError(kv, se, i)
+			}
+		}
+	}
+
+	z.Infow(msg, kv...)
 }
 
 // Warn implements ctxd.Logger.
@@ -202,7 +250,30 @@ func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interfac
 		return
 	}
 
-	l.log(ctx, z.Warnw, msg, keysAndValues...)
+	var (
+		fv = ctxd.Fields(ctx)
+		kv = keysAndValues
+	)
+
+	if len(fv) > 0 {
+		kv = make([]interface{}, 0, len(fv)+len(kv))
+
+		kv = append(kv, keysAndValues...)
+		kv = append(kv, fv...)
+	}
+
+	for i := 1; i < len(kv); i += 2 {
+		v := kv[i]
+		if err, ok := v.(error); ok {
+			var se ctxd.StructuredError
+
+			if errors.As(err, &se) {
+				kv = expandError(kv, se, i)
+			}
+		}
+	}
+
+	z.Warnw(msg, kv...)
 }
 
 // Error implements ctxd.Logger.
@@ -212,7 +283,30 @@ func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interfa
 		return
 	}
 
-	l.log(ctx, z.Errorw, msg, keysAndValues...)
+	var (
+		fv = ctxd.Fields(ctx)
+		kv = keysAndValues
+	)
+
+	if len(fv) > 0 {
+		kv = make([]interface{}, 0, len(fv)+len(kv))
+
+		kv = append(kv, keysAndValues...)
+		kv = append(kv, fv...)
+	}
+
+	for i := 1; i < len(kv); i += 2 {
+		v := kv[i]
+		if err, ok := v.(error); ok {
+			var se ctxd.StructuredError
+
+			if errors.As(err, &se) {
+				kv = expandError(kv, se, i)
+			}
+		}
+	}
+
+	z.Errorw(msg, kv...)
 }
 
 func (l *Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogger {

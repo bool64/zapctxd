@@ -253,8 +253,9 @@ func TestNew_structuredError(t *testing.T) {
 	w := bytes.Buffer{}
 
 	c := zapctxd.New(zapctxd.Config{
-		Level:  zap.ErrorLevel, // Error level does not allow Info messages, but allows Important.
-		Output: &w,
+		Level:     zap.DebugLevel,
+		Output:    &w,
+		StripTime: true,
 	})
 
 	ctx := context.Background()
@@ -262,8 +263,16 @@ func TestNew_structuredError(t *testing.T) {
 
 	err := ctxd.WrapError(ctx, errors.New("failed"), "making foo", "detail1", 1, "detail2", 2)
 
+	c.Debug(ctx, "hello!", "foo", 1, "error", err)
+	c.Info(ctx, "hello!", "foo", 1, "error", err)
+	c.Warn(ctx, "hello!", "foo", 1, "error", err)
 	c.Error(ctx, "hello!", "foo", 1, "error", err)
+	c.Important(ctx, "hello!", "foo", 1, "error", err)
 
-	assertjson.Equal(t,
-		[]byte(`{"level":"error","time":"<ignore-diff>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}`), w.Bytes(), w.String())
+	assert.Equal(t, `{"level":"debug","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"info","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"warn","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"error","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+{"level":"info","time":"<stripped>","msg":"hello!","foo":1,"error":"making foo: failed","ctx":123,"detail1":1,"detail2":2}
+`, w.String(), w.String())
 }
