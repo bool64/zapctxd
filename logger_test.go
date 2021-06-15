@@ -232,6 +232,8 @@ func TestLogger_SkipCaller(t *testing.T) {
 	assert.Equal(t, `<stripped>	INFO	zapctxd/logger_test.go:226	hello	{"k": "v"}
 <stripped>	INFO	zapctxd/logger_test.go:230	world	{"k": "v"}
 `, w.String())
+
+	assert.NotNil(t, zapctxd.New(zapctxd.Config{}).SkipCaller())
 }
 
 func TestNew_zapOptions(t *testing.T) {

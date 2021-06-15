@@ -39,7 +39,7 @@ type Config struct {
 }
 
 // New creates contextualized logger with zap backend.
-func New(cfg Config, options ...zap.Option) Logger {
+func New(cfg Config, options ...zap.Option) *Logger {
 	level := zap.InfoLevel
 
 	if cfg.Level != 0 {
@@ -91,7 +91,7 @@ func New(cfg Config, options ...zap.Option) Logger {
 
 	l.make()
 
-	return l
+	return &l
 }
 
 func (l *Logger) make() {
