@@ -114,10 +114,12 @@ func (l *Logger) SkipCaller() *Logger {
 		return l
 	}
 
-	l.options = append(l.options, zap.AddCallerSkip(1))
-	l.make()
+	nl := *l
 
-	return l
+	nl.debug = nl.debug.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar()
+	nl.sugared = nl.sugared.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar()
+
+	return &nl
 }
 
 // Debug implements ctxd.Logger.
