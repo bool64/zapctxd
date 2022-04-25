@@ -348,6 +348,8 @@ func (l *Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogge
 	return z
 }
 
+var _ ctxd.LoggerProvider = &Logger{}
+
 // CtxdLogger provides contextualized logger.
 func (l *Logger) CtxdLogger() ctxd.Logger {
 	return l
