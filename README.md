@@ -42,3 +42,7 @@ logger.Info(ctx, "logged because logger level was changed to DEBUG")
 // <stripped>	INFO	zapctxd/example_test.go:29	logged because of forced DEBUG mode	{"foo": "bar"}
 // <stripped>	INFO	zapctxd/example_test.go:32	logged because logger level was changed to DEBUG	{"foo": "bar"} 
 ```
+
+## See Also
+
+* [zPage to report aggregated logs](https://github.com/bool64/logz)
