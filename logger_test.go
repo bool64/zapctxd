@@ -8,12 +8,11 @@ import (
 	"testing"
 
 	"github.com/bool64/ctxd"
+	"github.com/bool64/zapctxd"
 	"github.com/stretchr/testify/assert"
 	"github.com/swaggest/assertjson"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/bool64/zapctxd"
 )
 
 func TestLogger(t *testing.T) {
