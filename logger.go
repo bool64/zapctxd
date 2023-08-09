@@ -34,6 +34,8 @@ type Config struct {
 	Output     io.Writer
 	ZapOptions []zap.Option
 
+	// ColoredOutput enables colored output in development mode.
+	ColoredOutput bool
 	// StripTime disables time variance in logger.
 	StripTime bool
 }
@@ -70,6 +72,11 @@ func New(cfg Config, options ...zap.Option) *Logger {
 	if cfg.DevMode {
 		encoderConfig = zap.NewDevelopmentEncoderConfig()
 		encoderConfig.EncodeTime = timeEncoder
+
+		if cfg.ColoredOutput {
+			encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		}
+
 		l.encoder = zapcore.NewConsoleEncoder(encoderConfig)
 		l.callerSkip = true
 		l.options = append(l.options, zap.Development(), zap.AddCaller(), zap.AddCallerSkip(1))
