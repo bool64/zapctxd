@@ -1,6 +1,6 @@
 module github.com/bool64/zapctxd
 
-go 1.17
+go 1.18
 
 require (
 	github.com/bool64/ctxd v1.2.1
