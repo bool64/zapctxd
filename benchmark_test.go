@@ -2,7 +2,7 @@ package zapctxd_test
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/bool64/ctxd"
@@ -37,7 +37,7 @@ func BenchmarkCtxFull(b *testing.B) {
 
 	ctx := context.Background()
 	ctx = ctxd.AddFields(ctx, "bla2", 2, "ops", 3.5)
-	ctx = ctxd.WithLogWriter(ctx, ioutil.Discard)
+	ctx = ctxd.WithLogWriter(ctx, io.Discard)
 	ctx = ctxd.WithDebug(ctx)
 
 	// Put some pressure on context.
@@ -60,7 +60,7 @@ func BenchmarkCtxFull(b *testing.B) {
 func BenchmarkCtxLite(b *testing.B) {
 	c := zapctxd.New(zapctxd.Config{
 		Level:  zap.DebugLevel,
-		Output: ioutil.Discard,
+		Output: io.Discard,
 	})
 
 	ctx := context.Background()
