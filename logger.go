@@ -151,6 +151,8 @@ func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interfa
 	for i := 1; i < len(kv); i += 2 {
 		v := kv[i]
 		if err, ok := v.(error); ok {
+			kv[i] = err.Error()
+
 			var se ctxd.StructuredError
 
 			if errors.As(err, &se) {
@@ -208,6 +210,8 @@ func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interfac
 	for i := 1; i < len(kv); i += 2 {
 		v := kv[i]
 		if err, ok := v.(error); ok {
+			kv[i] = err.Error()
+
 			var se ctxd.StructuredError
 
 			if errors.As(err, &se) {
@@ -241,6 +245,8 @@ func (l *Logger) Important(ctx context.Context, msg string, keysAndValues ...int
 	for i := 1; i < len(kv); i += 2 {
 		v := kv[i]
 		if err, ok := v.(error); ok {
+			kv[i] = err.Error()
+
 			var se ctxd.StructuredError
 
 			if errors.As(err, &se) {
@@ -274,6 +280,8 @@ func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interfac
 	for i := 1; i < len(kv); i += 2 {
 		v := kv[i]
 		if err, ok := v.(error); ok {
+			kv[i] = err.Error()
+
 			var se ctxd.StructuredError
 
 			if errors.As(err, &se) {
@@ -307,6 +315,8 @@ func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interfa
 	for i := 1; i < len(kv); i += 2 {
 		v := kv[i]
 		if err, ok := v.(error); ok {
+			kv[i] = err.Error()
+
 			var se ctxd.StructuredError
 
 			if errors.As(err, &se) {
