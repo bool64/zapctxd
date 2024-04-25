@@ -3,7 +3,7 @@
 This library implements [contextualized logger](https://pkg.go.dev/github.com/bool64/ctxd#Logger) with 
 [`zap`](https://pkg.go.dev/go.uber.org/zap).
 
-[![Build Status](https://github.com/bool64/zapctxd/workflows/test/badge.svg)](https://github.com/bool64/zapctxd/actions?query=branch%3Amaster+workflow%3Atest)
+[![Build Status](https://github.com/bool64/zapctxd/workflows/test-unit/badge.svg)](https://github.com/bool64/zapctxd/actions?query=branch%3Amaster+workflow%3Atest-unit)
 [![Coverage Status](https://codecov.io/gh/bool64/zapctxd/branch/master/graph/badge.svg)](https://codecov.io/gh/bool64/zapctxd)
 [![GoDevDoc](https://img.shields.io/badge/dev-doc-00ADD8?logo=go)](https://pkg.go.dev/github.com/bool64/zapctxd)
 [![time tracker](https://wakatime.com/badge/github/bool64/zapctxd.svg)](https://wakatime.com/badge/github/bool64/zapctxd)
