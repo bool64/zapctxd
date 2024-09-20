@@ -356,7 +356,7 @@ func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...any) {
 
 func (l *Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogger {
 	z := l.sugared
-	if (l.levelEnabler != nil && !l.levelEnabler.Enabled(level)) || (l.levelEnabler == nil && !l.AtomicLevel.Enabled(level)) {
+	if !l.levelEnabler.Enabled(level) {
 		z = nil
 	}
 
