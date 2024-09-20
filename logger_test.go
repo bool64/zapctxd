@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/bool64/ctxd"
-	"github.com/bool64/zapctxd"
 	"github.com/stretchr/testify/assert"
 	"github.com/swaggest/assertjson"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/bool64/zapctxd"
 )
 
 func TestLogger(t *testing.T) {
@@ -24,6 +25,7 @@ func TestLogger(t *testing.T) {
 	ctx = ctxd.WithLogWriter(ctx, w)
 
 	type ctxInt int
+
 	// Put some pressure on context.
 	for i := 0; i < 20; i++ {
 		ctx = context.WithValue(ctx, ctxInt(i), i)
@@ -54,8 +56,8 @@ func TestLogger(t *testing.T) {
 
 	c.Debug(ctx, "hello!",
 		"foo", 1,
-		"def", ctxd.DeferredJSON(func() interface{} { return 123 }),
-		"defstr", ctxd.DeferredJSON(func() interface{} { return "abc" }),
+		"def", ctxd.DeferredJSON(func() any { return 123 }),
+		"defstr", ctxd.DeferredJSON(func() any { return "abc" }),
 	)
 	assertjson.Equal(t,
 		[]byte(
@@ -80,6 +82,7 @@ func TestLogger_concurrency(t *testing.T) {
 			logger.Error(ctx, "hello")
 		}()
 	}
+
 	wg.Wait()
 
 	assert.Equal(t,
@@ -119,7 +122,7 @@ func TestLogger_Importantw_dev(t *testing.T) {
 	c.Info(ctx, "hello!", "foo", 1)
 	c.Important(ctx, "account created", "foo", 1)
 
-	assert.Equal(t, "<stripped>\tINFO\tzapctxd/logger_test.go:120\taccount created\t{\"foo\": 1}\n", w.String())
+	assert.Equal(t, "<stripped>\tINFO\tzapctxd/logger_test.go:123\taccount created\t{\"foo\": 1}\n", w.String())
 }
 
 func TestLogger_ColoredOutput_dev(t *testing.T) {
@@ -138,7 +141,7 @@ func TestLogger_ColoredOutput_dev(t *testing.T) {
 	c.Info(ctx, "hello!", "foo", 1)
 	c.Important(ctx, "account created", "foo", 1)
 
-	assert.Equal(t, "<stripped>\t\u001B[34mINFO\u001B[0m\tzapctxd/logger_test.go:139\taccount created\t{\"foo\": 1}\n", w.String())
+	assert.Equal(t, "<stripped>\t\u001B[34mINFO\u001B[0m\tzapctxd/logger_test.go:142\taccount created\t{\"foo\": 1}\n", w.String())
 }
 
 func TestNew_atomic_dev(t *testing.T) {
@@ -154,7 +157,7 @@ func TestNew_atomic_dev(t *testing.T) {
 	ctx := context.Background()
 
 	for _, lvl := range []zapcore.Level{zap.ErrorLevel, zap.WarnLevel, zap.InfoLevel, zap.DebugLevel} {
-		c.AtomicLevel.SetLevel(lvl)
+		c.SetLevelEnabler(lvl)
 
 		c.Debug(ctx, "msg", "lvl", lvl)
 		c.Info(ctx, "msg", "lvl", lvl)
@@ -163,20 +166,20 @@ func TestNew_atomic_dev(t *testing.T) {
 		c.Important(ctx, "msg", "lvl", lvl, "important", true)
 	}
 
-	assert.Equal(t, `<stripped>	ERROR	zapctxd/logger_test.go:162	msg	{"lvl": "error"}
-<stripped>	INFO	zapctxd/logger_test.go:163	msg	{"lvl": "error", "important": true}
-<stripped>	WARN	zapctxd/logger_test.go:161	msg	{"lvl": "warn"}
-<stripped>	ERROR	zapctxd/logger_test.go:162	msg	{"lvl": "warn"}
-<stripped>	INFO	zapctxd/logger_test.go:163	msg	{"lvl": "warn", "important": true}
-<stripped>	INFO	zapctxd/logger_test.go:160	msg	{"lvl": "info"}
-<stripped>	WARN	zapctxd/logger_test.go:161	msg	{"lvl": "info"}
-<stripped>	ERROR	zapctxd/logger_test.go:162	msg	{"lvl": "info"}
-<stripped>	INFO	zapctxd/logger_test.go:163	msg	{"lvl": "info", "important": true}
-<stripped>	DEBUG	zapctxd/logger_test.go:159	msg	{"lvl": "debug"}
-<stripped>	INFO	zapctxd/logger_test.go:160	msg	{"lvl": "debug"}
-<stripped>	WARN	zapctxd/logger_test.go:161	msg	{"lvl": "debug"}
-<stripped>	ERROR	zapctxd/logger_test.go:162	msg	{"lvl": "debug"}
-<stripped>	INFO	zapctxd/logger_test.go:163	msg	{"lvl": "debug", "important": true}
+	assert.Equal(t, `<stripped>	ERROR	zapctxd/logger_test.go:165	msg	{"lvl": "error"}
+<stripped>	INFO	zapctxd/logger_test.go:166	msg	{"lvl": "error", "important": true}
+<stripped>	WARN	zapctxd/logger_test.go:164	msg	{"lvl": "warn"}
+<stripped>	ERROR	zapctxd/logger_test.go:165	msg	{"lvl": "warn"}
+<stripped>	INFO	zapctxd/logger_test.go:166	msg	{"lvl": "warn", "important": true}
+<stripped>	INFO	zapctxd/logger_test.go:163	msg	{"lvl": "info"}
+<stripped>	WARN	zapctxd/logger_test.go:164	msg	{"lvl": "info"}
+<stripped>	ERROR	zapctxd/logger_test.go:165	msg	{"lvl": "info"}
+<stripped>	INFO	zapctxd/logger_test.go:166	msg	{"lvl": "info", "important": true}
+<stripped>	DEBUG	zapctxd/logger_test.go:162	msg	{"lvl": "debug"}
+<stripped>	INFO	zapctxd/logger_test.go:163	msg	{"lvl": "debug"}
+<stripped>	WARN	zapctxd/logger_test.go:164	msg	{"lvl": "debug"}
+<stripped>	ERROR	zapctxd/logger_test.go:165	msg	{"lvl": "debug"}
+<stripped>	INFO	zapctxd/logger_test.go:166	msg	{"lvl": "debug", "important": true}
 `, w.String(), w.String())
 }
 
@@ -192,7 +195,7 @@ func TestNew_atomic(t *testing.T) {
 	ctx := context.Background()
 
 	for _, lvl := range []zapcore.Level{zap.ErrorLevel, zap.WarnLevel, zap.InfoLevel, zap.DebugLevel} {
-		c.AtomicLevel.SetLevel(lvl)
+		c.SetLevelEnabler(lvl)
 
 		c.Debug(ctx, "msg", "lvl", lvl)
 		c.Info(ctx, "msg", "lvl", lvl)
@@ -231,6 +234,37 @@ func TestLogger_ZapLogger(t *testing.T) {
 	assert.Equal(t, `{"level":"error","time":"<stripped>","msg":"oops","error":"failed"}`+"\n", w.String())
 }
 
+func TestLogger_SetLevelEnabler_FailedToHandleZapLoggers(t *testing.T) {
+	t.Parallel()
+
+	w := bytes.NewBuffer(nil)
+	enc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	sl := zap.New(zapcore.NewCore(enc, zapcore.AddSync(w), zapcore.InfoLevel))
+
+	l := zapctxd.WrapZapLoggers(sl, sl, enc)
+
+	assert.Panics(t, func() {
+		l.SetLevelEnabler(zapcore.DebugLevel)
+	})
+}
+
+func TestLogger_SetLevelEnabler_Success(t *testing.T) {
+	t.Parallel()
+
+	w := bytes.NewBuffer(nil)
+
+	l := zapctxd.New(zapctxd.Config{
+		Level:     zap.InfoLevel,
+		StripTime: true,
+		DevMode:   true,
+		Output:    w,
+	})
+
+	assert.NotPanics(t, func() {
+		l.SetLevelEnabler(zapcore.DebugLevel)
+	})
+}
+
 func TestLogger_SkipCaller(t *testing.T) {
 	w := bytes.NewBuffer(nil)
 
@@ -249,9 +283,9 @@ func TestLogger_SkipCaller(t *testing.T) {
 
 	do()
 
-	assert.Equal(t, `<stripped>	INFO	zapctxd/logger_test.go:245	hello	{"k": "v"}
-<stripped>	INFO	zapctxd/logger_test.go:250	world	{"k": "v"}
-<stripped>	INFO	zapctxd/logger_test.go:247	hello	{"k": "v"}
+	assert.Equal(t, `<stripped>	INFO	zapctxd/logger_test.go:279	hello	{"k": "v"}
+<stripped>	INFO	zapctxd/logger_test.go:284	world	{"k": "v"}
+<stripped>	INFO	zapctxd/logger_test.go:281	hello	{"k": "v"}
 `, w.String())
 
 	assert.NotNil(t, zapctxd.New(zapctxd.Config{}).SkipCaller())
