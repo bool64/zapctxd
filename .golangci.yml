@@ -20,52 +20,48 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - copyloopvar
+    - depguard
     - dupl # some code duplication is traded for 1 alloc
-    - lll
-    - maligned
+    - dupword
+    - errname
+    - exportloopref
+    - execinquery
+    - exhaustruct
+    - forbidigo
+    - forcetypeassert
+    - gci
     - gochecknoglobals
     - gomnd
-    - wrapcheck
-    - paralleltest
-    - forbidigo
-    - exhaustivestruct
-    - interfacer # deprecated
-    - forcetypeassert
-    - scopelint # deprecated
-    - ifshort # too many false positives
-    - golint # deprecated
-    - varnamelen
-    - tagliatelle
-    - errname
-    - ireturn
-    - exhaustruct
+    - intrange
+    - lll
+    - mnd
     - nonamedreturns
-    - nosnakecase
-    - structcheck
-    - varcheck
-    - deadcode
-    - testableexamples
-    - dupword
-    - depguard
+    - paralleltest
     - tagalign
+    - tagliatelle
+    - testableexamples
+    - varnamelen
+    - wrapcheck
 
 issues:
   exclude-use-default: false
   exclude-rules:
     - linters:
-        - gomnd
+        - dupl
+        - err113
+        - fatcontext
+        - funlen
         - goconst
         - goerr113
+        - gomnd
+        - mnd
         - noctx
-        - funlen
-        - dupl
         - structcheck
-        - unused
         - unparam
-        - nosnakecase
+        - unused
       path: "_test.go"
     - linters:
         - errcheck # Error checking omitted for brevity.
         - gosec
       path: "example_"
-

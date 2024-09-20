@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/bool64/ctxd v1.2.1
-	github.com/bool64/dev v0.2.34
-	github.com/stretchr/testify v1.8.1
+	github.com/bool64/dev v0.2.36
+	github.com/stretchr/testify v1.9.0
 	github.com/swaggest/assertjson v1.9.0
 	go.uber.org/zap v1.27.0
 )

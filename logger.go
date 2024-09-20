@@ -17,13 +17,16 @@ var _ ctxd.Logger = &Logger{}
 
 // Logger is a contextualized zap logger.
 type Logger struct {
+	// Deprecated: Use SetLevelEnabler instead.
 	AtomicLevel zap.AtomicLevel
-	callerSkip  bool
-	encoder     zapcore.Encoder
-	sugared     *zap.SugaredLogger
-	debug       *zap.SugaredLogger
-	options     []zap.Option
-	out         zapcore.WriteSyncer
+
+	callerSkip   bool
+	encoder      zapcore.Encoder
+	levelEnabler zapcore.LevelEnabler
+	sugared      *zap.SugaredLogger
+	debug        *zap.SugaredLogger
+	options      []zap.Option
+	out          zapcore.WriteSyncer
 }
 
 // Config is log configuration.
@@ -64,9 +67,9 @@ func New(cfg Config, options ...zap.Option) *Logger {
 	}
 
 	l := Logger{
-		AtomicLevel: zap.NewAtomicLevelAt(level),
-		out:         out,
-		options:     append(cfg.ZapOptions, options...),
+		levelEnabler: zap.NewAtomicLevelAt(level),
+		out:          out,
+		options:      append(cfg.ZapOptions, options...),
 	}
 
 	if cfg.DevMode {
@@ -101,11 +104,25 @@ func New(cfg Config, options ...zap.Option) *Logger {
 	return &l
 }
 
+// WrapZapLoggers creates contextualized logger with provided zap loggers.
+func WrapZapLoggers(sugared, debug *zap.Logger, encoder zapcore.Encoder, options ...zap.Option) *Logger {
+	sugared = sugared.WithOptions(options...)
+	debug = debug.WithOptions(options...)
+
+	return &Logger{
+		levelEnabler: sugared.Core(),
+		sugared:      sugared.Sugar(),
+		debug:        debug.Sugar(),
+		encoder:      encoder,
+		options:      options,
+	}
+}
+
 func (l *Logger) make() {
 	l.sugared = zap.New(zapcore.NewCore(
 		l.encoder,
 		l.out,
-		l.AtomicLevel,
+		loggerLevelEnabler(l),
 	), l.options...).Sugar()
 
 	l.debug = zap.New(zapcore.NewCore(
@@ -113,6 +130,15 @@ func (l *Logger) make() {
 		l.out,
 		zap.DebugLevel,
 	), l.options...).Sugar()
+}
+
+// SetLevelEnabler sets level enabler.
+func (l *Logger) SetLevelEnabler(enabler zapcore.LevelEnabler) {
+	if _, ok := l.levelEnabler.(zapcore.Core); ok {
+		panic("cannot set level enabler when logger is created with zap loggers")
+	}
+
+	l.levelEnabler = enabler
 }
 
 // SkipCaller adapts logger for wrapping by increasing skip caller counter.
@@ -130,7 +156,7 @@ func (l *Logger) SkipCaller() *Logger {
 }
 
 // Debug implements ctxd.Logger.
-func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...any) {
 	z := l.get(ctx, zap.DebugLevel)
 	if z == nil {
 		return
@@ -142,7 +168,7 @@ func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interfa
 	)
 
 	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
+		kv = make([]any, 0, len(fv)+len(kv))
 
 		kv = append(kv, keysAndValues...)
 		kv = append(kv, fv...)
@@ -164,7 +190,7 @@ func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interfa
 	z.Debugw(msg, kv...)
 }
 
-func expandError(kv []interface{}, se ctxd.StructuredError, i int) []interface{} {
+func expandError(kv []any, se ctxd.StructuredError, i int) []any {
 	kv[i] = se.Error()
 
 	tuples := se.Tuples()
@@ -189,7 +215,7 @@ func expandError(kv []interface{}, se ctxd.StructuredError, i int) []interface{}
 }
 
 // Info implements ctxd.Logger.
-func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...any) {
 	z := l.get(ctx, zap.InfoLevel)
 	if z == nil {
 		return
@@ -201,7 +227,7 @@ func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interfac
 	)
 
 	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
+		kv = make([]any, 0, len(fv)+len(kv))
 
 		kv = append(kv, keysAndValues...)
 		kv = append(kv, fv...)
@@ -224,7 +250,7 @@ func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interfac
 }
 
 // Important implements ctxd.Logger.
-func (l *Logger) Important(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Important(ctx context.Context, msg string, keysAndValues ...any) {
 	z := l.get(ctxd.WithDebug(ctx), zap.InfoLevel)
 	if z == nil {
 		return
@@ -236,7 +262,7 @@ func (l *Logger) Important(ctx context.Context, msg string, keysAndValues ...int
 	)
 
 	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
+		kv = make([]any, 0, len(fv)+len(kv))
 
 		kv = append(kv, keysAndValues...)
 		kv = append(kv, fv...)
@@ -259,7 +285,7 @@ func (l *Logger) Important(ctx context.Context, msg string, keysAndValues ...int
 }
 
 // Warn implements ctxd.Logger.
-func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...any) {
 	z := l.get(ctx, zap.WarnLevel)
 	if z == nil {
 		return
@@ -271,7 +297,7 @@ func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interfac
 	)
 
 	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
+		kv = make([]any, 0, len(fv)+len(kv))
 
 		kv = append(kv, keysAndValues...)
 		kv = append(kv, fv...)
@@ -294,7 +320,7 @@ func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interfac
 }
 
 // Error implements ctxd.Logger.
-func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...any) {
 	z := l.get(ctx, zap.ErrorLevel)
 	if z == nil {
 		return
@@ -306,7 +332,7 @@ func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interfa
 	)
 
 	if len(fv) > 0 {
-		kv = make([]interface{}, 0, len(fv)+len(kv))
+		kv = make([]any, 0, len(fv)+len(kv))
 
 		kv = append(kv, keysAndValues...)
 		kv = append(kv, fv...)
@@ -330,7 +356,7 @@ func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interfa
 
 func (l *Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogger {
 	z := l.sugared
-	if !l.AtomicLevel.Enabled(level) {
+	if !l.levelEnabler.Enabled(level) {
 		z = nil
 	}
 
@@ -345,9 +371,9 @@ func (l *Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogge
 
 	writer := ctxd.LogWriter(ctx)
 	if writer != nil {
-		level := zap.DebugLevel
+		level := zapcore.LevelEnabler(zap.DebugLevel)
 		if !isDebug {
-			level = l.AtomicLevel.Level()
+			level = l.levelEnabler
 		}
 
 		ws, ok := writer.(zapcore.WriteSyncer)
@@ -368,11 +394,17 @@ func (l *Logger) get(ctx context.Context, level zapcore.Level) *zap.SugaredLogge
 var _ ctxd.LoggerProvider = &Logger{}
 
 // CtxdLogger provides contextualized logger.
-func (l *Logger) CtxdLogger() ctxd.Logger {
+func (l *Logger) CtxdLogger() ctxd.Logger { //nolint: ireturn
 	return l
 }
 
 // ZapLogger returns *zap.Logger that used in Logger.
 func (l *Logger) ZapLogger() *zap.Logger {
 	return l.sugared.Desugar()
+}
+
+func loggerLevelEnabler(l *Logger) zap.LevelEnablerFunc {
+	return func(lvl zapcore.Level) bool {
+		return l.levelEnabler.Enabled(lvl)
+	}
 }
