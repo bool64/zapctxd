@@ -34,6 +34,13 @@ type Config struct {
 	Level      zapcore.Level   `split_words:"true" default:"error"`
 	DevMode    bool            `split_words:"true"`
 	FieldNames ctxd.FieldNames `split_words:"true"`
+	// Output is the log destination. It is wrapped with zapcore.AddSync as is, without any
+	// additional locking, so it must already be safe for concurrent use: Logger and its
+	// SugaredLogger/*zap.Logger can be called from multiple goroutines at once, and every one
+	// of those calls reaches Output.Write directly. Plain *os.File is fine on most platforms,
+	// but wrapping writers that keep internal state (buffers, compressors, etc.) are typically
+	// not safe for concurrent Write calls and must be synchronized by the caller first, e.g.
+	// with zapcore.Lock(zapcore.AddSync(w)) or an equivalent mutex-guarded wrapper.
 	Output     io.Writer
 	ZapOptions []zap.Option
 
